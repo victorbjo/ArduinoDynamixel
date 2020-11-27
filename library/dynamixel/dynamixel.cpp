@@ -83,7 +83,38 @@ void dynamixel::pwmLimit(uint16_t limit){
   
   delay(4);
 }
-    
+void dynamixel::getPos(){
+
+  uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x02, 0x84, 0x00, 0x04, 0x00};
+  sendPckg(message, sizeof(message));
+  //Serial.print("ok");
+}
+void dynamixel::reboot(){
+  uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x03, 0x00, 0x08};
+  sendPckg(message, sizeof(message));
+  delay(50);
+}
+void dynamixel::setPID(uint16_t P, uint16_t I, uint16_t D){
+  uint8_t array[2];
+  array[0]=P & 0xff;
+  array[1]=(P >> 8);
+  uint8_t messageP[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x04, 0x54, 0x00, array[0] ,array[1]};
+  array[0]=I & 0xff;
+  array[1]=(I >> 8);
+  uint8_t messageI[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x04, 0x52, 0x00, array[0] ,array[1]};
+  array[0]=D & 0xff;
+  array[1]=(D >> 8);
+  uint8_t messageD[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x04, 0x50, 0x00, array[0] ,array[1]};
+  sendPckg(messageP, sizeof(messageP));
+  delay(4);
+  action();
+  sendPckg(messageI, sizeof(messageI));
+  delay(4);
+  action();
+  sendPckg(messageD, sizeof(messageD));
+  delay(4);
+  action();
+}
 
   
   
@@ -147,7 +178,9 @@ void dynamixel::sendPckg(uint8_t msg[], int msgSize){
   }
   msg1[msgSize] = array[0]; 
   msg1[msgSize+1] = array[1];
-  mySerial.write(msg1,sizeof(msg1));/*
+  mySerial.write(msg1,sizeof(msg1));
+  /*
+  
   for (int i = 0; i < sizeof(msg1); i++){
     
   

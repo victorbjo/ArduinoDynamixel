@@ -2,7 +2,6 @@
 #define Morse_h
 
 #include "Arduino.h"
-
 class dynamixel
 {
   public:
@@ -21,7 +20,11 @@ class dynamixel
     void velLimit(uint16_t limit);
     void pwmLimit(uint16_t limit);
     uint16_t compute_crc(uint16_t crc_accum, uint8_t* data_blk_ptr, size_t data_blk_size);
+    void getPos();
+    void setPID(uint16_t P, uint16_t I, uint16_t D);
+    void reboot();
   private:
+    
     uint8_t _id;
     uint16_t  crc_table[256];
 };
