@@ -179,7 +179,10 @@ void dynamixel::sendPckg(uint8_t msg[], int msgSize){
   msg1[msgSize] = array[0]; 
   msg1[msgSize+1] = array[1];
   mySerial.write(msg1,sizeof(msg1));
+}
+
   /*
+  commented out code from the bottom of the dynamixel::sendPckg code
   
   for (int i = 0; i < sizeof(msg1); i++){
     
@@ -188,4 +191,3 @@ void dynamixel::sendPckg(uint8_t msg[], int msgSize){
     Serial.print("; ");
   }
   Serial.println();*/
-}
