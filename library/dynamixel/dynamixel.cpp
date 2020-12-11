@@ -1,23 +1,21 @@
-/*
-  Morse.cpp - Library for flashing Morse code.
-  Created by David A. Mellis, November 2, 2007.
-  Released into the public domain.
-*/
-
 #include "Arduino.h"
 #include "dynamixel.h"
 #include "SoftwareSerial.h"
-
+//The main class for the motor
 dynamixel::dynamixel(uint8_t id)
 {
   _id = id;
 }
-
+//All the basic functions
 void dynamixel::ledOn(){
+  //Constructing the packet for the motor
   uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x06, 0x00, 0x04, 0x41, 0x00, 0x01};
+  //Sending Package to motor via function
   sendPckg(message, sizeof(message));
+  //Delay .004 seconds, otherwise wont work.
   delay(4);
 };
+//Same thing for every other pckg basically
 void dynamixel::ledOff(){
   uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x06, 0x00, 0x04, 0x41, 0x00, 0x00};
   sendPckg(message, sizeof(message));
@@ -39,7 +37,8 @@ void dynamixel::torgueEnable(){
   delay(4);
 }
 void dynamixel::goalVel(int velocity){
-  
+  //Support for negative values
+  //Negative values is expressed as "FF, FF + value"
   if (velocity < 0){
     uint8_t vel = 256 + velocity;
     uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x09, 0x00, 0x04, 0x68, 0x00, 255 + velocity ,0xff,0xff,0xff};
@@ -50,14 +49,18 @@ void dynamixel::goalVel(int velocity){
     sendPckg(message, sizeof(message));
     delay(4);
   }}
+
 void dynamixel::changeMode(int mode){
   uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x06, 0x00, 0x04, 0x0B, 0x00, mode};
   sendPckg(message, sizeof(message));
   delay(4);
 }
+
 void dynamixel::goalPos(uint16_t pos){
+  //Converts from deg to 4095 steps
   pos = uint16_t(double(float(4096)/float(360))*pos);
   uint8_t array[2];
+  //Splits 16 bite variable up into 2 8 bit variables
   array[0]=pos & 0xff;
   array[1]=(pos >> 8);
   uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x09, 0x00, 0x04, 0x74, 0x00, array[0] ,array[1],0,0};
@@ -67,6 +70,7 @@ void dynamixel::goalPos(uint16_t pos){
 }
 void dynamixel::velLimit(uint16_t limit){
   uint8_t array[2];
+  //Splits 16 bite variable up into 2 8 bit variables
   array[0]=limit & 0xff;
   array[1]=(limit >> 8);
   uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x09, 0x00, 0x04, 0x2C, 0x00, array[0] ,array[1],0,0};
@@ -75,6 +79,7 @@ void dynamixel::velLimit(uint16_t limit){
   delay(4);
 }
 void dynamixel::pwmLimit(uint16_t limit){
+  //Splits 16 bite variable up into 2 8 bit variables
   uint8_t array[2];
   array[0]=limit & 0xff;
   array[1]=(limit >> 8);
@@ -85,16 +90,18 @@ void dynamixel::pwmLimit(uint16_t limit){
 }
 void dynamixel::getPos(){
 
-  uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x02, 0x84, 0x00, 0x04, 0x00};
+uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x02, 0x7e, 0x00, 0x02, 0x00};
   sendPckg(message, sizeof(message));
   //Serial.print("ok");
 }
+
 void dynamixel::reboot(){
   uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x03, 0x00, 0x08};
   sendPckg(message, sizeof(message));
   delay(50);
 }
 void dynamixel::setPID(uint16_t P, uint16_t I, uint16_t D){
+  //Setting the PID values
   uint8_t array[2];
   array[0]=P & 0xff;
   array[1]=(P >> 8);
@@ -116,10 +123,32 @@ void dynamixel::setPID(uint16_t P, uint16_t I, uint16_t D){
   action();
 }
 
+void dynamixel::getVel(){
+  uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x02, 0x80, 0x00, 0x04, 0x00};
+  sendPckg(message, sizeof(message));
+  //Serial.print("ok");
+}
+  
+void dynamixel::getAmp(){
+
+  uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x02, 0x7e, 0x00, 0x02, 0x00};
+  sendPckg(message, sizeof(message));
+  //Serial.print("ok");
+}
+
+void dynamixel::goalPWM(int pwm){
+  
+  if (pwm < 0){
+ uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x04, 0x64, 0x00, 0x00, 0xFF};
+ sendPckg(message, sizeof(message));
+  }else{
+uint8_t message[] = {0xFF, 0xFF, 0xFD, 0x00, _id, 0x07, 0x00, 0x04, 0x64, 0x00, 0x00, 0x01};
+sendPckg(message, sizeof(message));
+  }
   
   
-
-
+}
+//Function for calculating CRC. Dunno how it works, got it directly from dynamixel.
 uint16_t dynamixel::compute_crc(uint16_t crc_accum, uint8_t* data_blk_ptr, size_t data_blk_size)
 {
     uint16_t  crc_table[] = {
@@ -167,27 +196,26 @@ uint16_t dynamixel::compute_crc(uint16_t crc_accum, uint8_t* data_blk_ptr, size_
 void dynamixel::sendPckg(uint8_t msg[], int msgSize){
   SoftwareSerial mySerial(10, 11); 
   mySerial.begin(57600);
+  //Calculates length, only to show that we know what each section in package does. Coulda used msgSize+2 but chose not to. 
   int message_length = msg[5] + 7;
-  uint16_t computed_crc = compute_crc(0, msg, message_length - 2);
+  uint16_t computed_crc = compute_crc(0, msg, message_length - 2);//Could really have used msgSize here, but chose not to again cuz package and stuff.
+  //Doest really make any differene anyway, except make for more convoluted code.
+  //But that's life
   uint8_t array[2];
   array[0]=computed_crc & 0xff;
   array[1]=(computed_crc >> 8);
-  uint8_t msg1[msgSize+2];
+  uint8_t msg1[msgSize+2]; //Using msgSize, because nobody wants consistency. 
+  //Please do not judge us for inconsistent idiotic code. We know, we just did not have time to fix and test...
+
+
+  //Filling new array with values of old one
   for (int i = 0; i < msgSize; i++){
     msg1[i]=msg[i];
   }
+  //Fillind end of array with the new CRC code.
   msg1[msgSize] = array[0]; 
   msg1[msgSize+1] = array[1];
+  //Sends of the array in bytes via built-in Arduino Functions...
   mySerial.write(msg1,sizeof(msg1));
-}
 
-  /*
-  commented out code from the bottom of the dynamixel::sendPckg code
-  
-  for (int i = 0; i < sizeof(msg1); i++){
-    
-  
-    Serial.print(msg1[i]);
-    Serial.print("; ");
-  }
-  Serial.println();*/
+}

@@ -23,6 +23,9 @@ class dynamixel
     void getPos();
     void setPID(uint16_t P, uint16_t I, uint16_t D);
     void reboot();
+    void getVel();
+    void getAmp();
+    void goalPWM(int pwm);
   private:
     
     uint8_t _id;
